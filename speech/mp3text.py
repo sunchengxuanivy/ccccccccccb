@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import subprocess
 
 from google.cloud import storage
@@ -78,22 +79,56 @@ def result_to_sentences(words):
     return sentences
 
 
+def slow_down(org_path, stg1_path, stg2_path):
+    org = str(org_path)
+    stg1 = str(stg1_path)
+    stg2 = str(stg2_path)
+    stg1_cmd = ['sbsms', org, stg1, '0.75', '0.75', '0', '0']
+    print(stg1_cmd)
+    subprocess.check_call(stg1_cmd)
+    stg2_cmd = ['sox', stg1, '-b', '16', '-e', 'signed-integer', stg2]
+    print(stg2_cmd)
+    subprocess.check_call(stg2_cmd)
+
+
 # def main(request):
 if __name__ == "__main__":
 
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.path.expanduser('/root/credential.json')
-    storage_client = storage.Client()
-    bucket = storage_client.get_bucket("ccb_audio_automate")
-    blob = bucket.blob('notebooks_jupyter_1007_3.wav')
-    blob.download_to_filename('/root/notebooks_jupyter_1007_3.wa')
-    process = subprocess.Popen(
-        ['sbsms', '/root/notebooks_jupyter_1007_3.wav', '/root/1007-3.wav',
-         '0.75', '0.75', '0', '0'], stdout=subprocess.PIPE)
-    output, error = process.communicate()
 
-    slowed_blob = bucket.blob('1007-3.wav')
-    slowed_blob.upload_from_filename('/root/1007-3.wav')
-    res = transcribe_gcs("gs://ccb_audio_automate/1007-3.wav")
+    ORG_AUDIO_BUCKET = 'ccb_audio_automate'
+    SLOW_AUDIO_BUCKET = 'ccb_audio_slow'
+    TRANSCRIPT_BUCKET = 'ccb_audio_transcript'
+
+    blob_name = 'notebooks_jupyter_1007_3.wav'
+    local_file_name = blob_name.replace('/', '_')
+
+    tmp_folder = Path('/tmp')
+
+    local_org_path = tmp_folder / local_file_name
+
+    local_slow1_path = tmp_folder / 'slow1_{}'.format(local_file_name)
+    local_slow2_path = tmp_folder / 'slow2_{}'.format(local_file_name)
+    local_transcript_path = (tmp_folder / local_org_path.stem).with_suffix('.txt')
+
+    storage_client = storage.Client()
+    org_audio_bucket = storage_client.get_bucket(ORG_AUDIO_BUCKET)
+    slow_audio_bucket = storage_client.get_bucket(SLOW_AUDIO_BUCKET)
+    transcript_bucket = storage_client.get_bucket(TRANSCRIPT_BUCKET)
+
+    # Start process audio files
+    # download org audio file
+    org_audio_bucket.blob(blob_name).download_to_filename(str(local_org_path))
+
+    # slow down speech speed. local_slow2_path is the output.
+    slow_down(local_org_path, local_slow1_path, local_slow2_path)
+
+    # upload the slowed-down audio.
+    slowed_blob = slow_audio_bucket.blob(local_slow2_path.name)
+    slowed_blob.upload_from_filename(str(local_slow2_path))
+
+    # speech-to-text API
+    res = transcribe_gcs("gs://{}/{}".format(slow_audio_bucket.name, slowed_blob.name))
 
     result = res.results[-1]
     words_info = result.alternatives[0].words
@@ -112,12 +147,14 @@ if __name__ == "__main__":
 
     sentences = result_to_sentences(words_info)
 
-    with open('/tmp/1007-3.txt', 'aw') as file:
+    with open(local_transcript_path, 'w+') as file:
         for sentence in sentences:
             file.write("{}\t{}\t{}".format(sentence.start_time, sentence.end_time, sentence.words))
             file.write('\n')
 
-    storage_client = storage.Client()
-    bucket = storage_client.get_bucket("ccb_audio_automate")
-    blob = bucket.blob('1007-3.txt')
-    blob.upload_from_filename('/tmp/1007-3.txt')
+    transcript_bucket.blob(local_transcript_path.name).upload_from_filename(str(local_transcript_path))
+
+    os.remove(local_org_path)
+    os.remove(local_slow1_path)
+    os.remove(local_slow2_path)
+    os.remove(local_transcript_path)
