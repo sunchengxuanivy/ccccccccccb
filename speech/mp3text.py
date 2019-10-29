@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 import subprocess
 
@@ -100,7 +101,7 @@ if __name__ == "__main__":
     SLOW_AUDIO_BUCKET = 'ccb_audio_slow'
     TRANSCRIPT_BUCKET = 'ccb_audio_transcript'
 
-    blob_name = 'notebooks_jupyter_1007_3.wav'
+    blob_name = sys.argv[1]
     local_file_name = blob_name.replace('/', '_')
 
     tmp_folder = Path('/tmp')
