@@ -1,4 +1,8 @@
-1003_3_TimeGap/0.7s-Table 1.csv
-1003_3_TimeGap/1s-Table 1.csv
-1007_3_TimeGap/0.7s-Table 1.csv
-1007_3_TimeGap/1s-Table 1.csv
+transcript_30/1005_2.txt
+transcript_30/1006_2.txt
+transcript_30/1008_2.txt
+transcript_30/1009_2.txt
+transcript_30/1012_2.txt
+transcript_30/1013_2.txt
+transcript_30/1014_2.txt
+transcript_30/1015_2.txttranscript_30/1017_2.txttranscript_30/1018_2.txttranscript_30/1019_2.txttranscript_30/1020_2.txttranscript_30/1022_2.txttranscript_30/1023_2.txttranscript_30/1024_2.txttranscript_30/1027_2.txttranscript_30/1028_2.txttranscript_30/1031_2.txttranscript_30/1034_2.txttranscript_30/1035_2.txttranscript_30/1036_2.txttranscript_30/1037_2.txttranscript_30/1038_2.txttranscript_30/1040_2.txttranscript_30/1041_2.txttranscript_30/1043_2.txttranscript_30/1044_2.txttranscript_30/1046_2.txttranscript_30/1047_2.txttranscript_30/1048_2.txttranscript_30/1050_2.txttranscript_30/1051_2.txttranscript_30/1052_2.txt
